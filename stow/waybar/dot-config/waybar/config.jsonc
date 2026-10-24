@@ -1,0 +1,114 @@
+{
+  "reload_style_on_change": true,
+  "layer": "top",
+  "position": "top",
+  "spacing": 0,
+  "height": 24,
+
+  //////////////////////////////// MODULES /////////////////////////////////
+  "modules-left": ["custom/arch", "custom/separator", "hyprland/workspaces", "hyprland/window"],
+  "modules-center": ["clock#date", "custom/separator", "clock#time"],
+  "modules-right": [
+    "hyprland/language",
+    "network",
+    "pulseaudio",
+    "cpu",
+    "custom/separator",
+    "custom/power",
+   ],
+
+  ////////////////////////// MODULES CONFIGURATION ////////////////////////////
+  "custom/arch": {
+    "format": "󰣇",
+    "tooltip": false
+  },
+  "custom/separator": {
+    "format": "|",
+    "interval": "once",
+    "tooltip": false
+  },
+  "hyprland/workspaces": {
+    "on-click": "activate",
+    "format": "{name}",
+    "format-icons": {
+      "default": "",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
+      "7": "7",
+      "8": "8",
+      "9": "9"
+    },
+    "persistent-workspaces": {
+      "1": [],
+      "2": [],
+      "3": [],
+      "4": []
+    }
+  },
+  "cpu": {
+    "interval": 5,
+    "format": "󰍛",
+    "tooltip-format": "CPU: {usage}%",
+    "on-click": "kitty -e btop"
+  },
+  "hyprland/window": {
+    "format": "{class}",
+    "icon": true,
+    "icon-size": 20
+  },
+  "hyprland/language": {
+    "format": "{}",
+    "on-click": "hyprctl switchxkblayout current next",
+    "format-us": "EN",
+    "format-ua": "UA"
+  },
+  "network": {
+    "format-icons": ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"],
+    "format": "{icon}",
+    "format-wifi": "{icon}",
+    "format-ethernet": "",
+    "format-disconnected": "󰤮",
+    "tooltip-format-wifi": "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
+    "tooltip-format-ethernet": "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
+    "tooltip-format-disconnected": "Disconnected",
+    "interval": 5,
+    "spacing": 1,
+    "on-click": "nm-connection-editor"
+  },
+  "pulseaudio": {
+    "format": " {volume}%",
+    "format-muted": " muted",
+    "on-click": "qs ipc call audioOutput toggle",
+    "on-click-right": "pavucontrol"
+  },
+  "tray": {
+    "icon-size": 14,
+    "spacing": 17
+  },
+  "clock#time": {
+        "interval": 1,
+        "format": "󰥔 {:%I:%M %p}",
+        "tooltip": false
+  },
+  "clock#date": {
+        "interval": 60,
+        "format": " {:%a %e %b}", // Icon: calendar-alt
+	      "tooltip": true,
+        "tooltip-format": "<tt><big>{calendar}</big></tt>",
+        "calendar": {
+          "mode": "month",
+          "format": {
+            "today": "<span background='#81A1C1' foreground='#2E3440'><b>{}</b></span>"
+          }
+        },
+  },
+  "custom/power": {
+    "format": "⏻",
+    "tooltip": false,
+    "on-click": "wlogout"
+  }
+}

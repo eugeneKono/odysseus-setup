@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# Set an image as the wallpaper using hyprpaper.
+# The image path is supplied as the first argument.
+
+set -euo pipefail
+
+image="${1:?Usage: set-wallpaper /path/to/image}"
+
+if [[ ! -f "$image" ]]; then
+    notify-send "Wallpaper" "Image file not found: $image"
+    exit 1
+fi
+
+image="$(realpath "$image")"
+
+# Load and apply the new wallpaper to all applicable monitors.
+hyprctl hyprpaper reload ",$image"
+
+notify-send "Wallpaper changed" "$(basename "$image")"

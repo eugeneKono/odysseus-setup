@@ -1,0 +1,28 @@
+#!/bin/bash
+
+THEME_DIR="${HOME}/.config/waybar/themes"
+CONFIG_DIR="${HOME}/.config/waybar"
+
+if [ -z "$1" ]; then
+    echo "Usage: waybar-theme <theme-name>"
+    echo "Available themes:"
+    ls "$THEME_DIR" | sed 's/.css$//'
+    exit 1
+fi
+
+THEME="$1"
+THEME_FILE="${THEME_DIR}/${THEME}.css"
+
+if [ ! -f "$THEME_FILE" ]; then
+    echo "Theme '$THEME' not found!"
+    echo "Available themes:"
+    ls "$THEME_DIR" | sed 's/.css$//'
+    exit 1
+fi
+
+# Update style.css to import new theme
+sed -i "s|@import \"themes/.*\.css\";|@import \"themes/${THEME}.css\";|" "$CONFIG_DIR/style.css"
+
+echo "Theme changed to: $THEME"
+echo "Reloading waybar..."
+killall -SIGUSR2 waybar || waybar &

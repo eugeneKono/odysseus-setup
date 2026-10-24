@@ -1,0 +1,21 @@
+# Nord-style Yazi theme
+
+[manager]
+cwd = { fg = "#88c0d0" }
+
+[filetype]
+dir   = { fg = "#81a1c1", bold = true }
+file  = { fg = "#d8dee9" }
+
+image = { fg = "#b48ead" }
+video = { fg = "#bf616a" }
+audio = { fg = "#a3be8c" }
+media = { fg = "#ebcb8b" }
+
+symlink = { fg = "#88c0d0", italic = true }
+
+[status]
+overall = { fg = "#d8dee9", bg = "#2e3440" }
+
+[select]
+active = { fg = "#2e3440", bg = "#88c0d0" }

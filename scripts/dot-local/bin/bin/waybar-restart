@@ -1,0 +1,4 @@
+#!/bin/bash
+# Restart waybar
+killall waybar 2>/dev/null
+waybar &

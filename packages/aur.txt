@@ -1,0 +1,10 @@
+brave-origin-bin
+elephant-bin
+elephant-calc-bin
+elephant-desktopapplications-bin
+elephant-providerlist-bin
+sddm-hyprland
+walker-bin
+wlogout
+yay
+zsh-theme-powerlevel10k-git

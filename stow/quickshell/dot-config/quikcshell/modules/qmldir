@@ -1,0 +1,4 @@
+module qs.modules
+AudioOutput 1.0 AudioOutput.qml
+Notifications 1.0 Notifications.qml
+PowerMenu 1.0 PowerMenu.qml

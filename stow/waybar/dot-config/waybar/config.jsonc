@@ -12,15 +12,15 @@
     "hyprland/language",
     "network",
     "pulseaudio",
-    "cpu",
     "custom/separator",
-    "custom/power",
+    "custom/power", 
    ],
 
   ////////////////////////// MODULES CONFIGURATION ////////////////////////////
   "custom/arch": {
     "format": "󰣇",
-    "tooltip": false
+    "tooltip": false,
+    "on-click": "qs ipc call systemMonitor toggle"
   },
   "custom/separator": {
     "format": "|",
@@ -28,7 +28,6 @@
     "tooltip": false
   },
   "hyprland/workspaces": {
-    "on-click": "activate",
     "format": "{name}",
     "format-icons": {
       "default": "",
@@ -48,12 +47,6 @@
       "3": [],
       "4": []
     }
-  },
-  "cpu": {
-    "interval": 5,
-    "format": "󰍛",
-    "tooltip-format": "CPU: {usage}%",
-    "on-click": "kitty -e btop"
   },
   "hyprland/window": {
     "format": "{class}",
@@ -96,7 +89,7 @@
   },
   "clock#date": {
         "interval": 60,
-        "format": " {:%a %e %b}", // Icon: calendar-alt
+        "format": " {:%a%e %b}", // Icon: calendar-alt
 	      "tooltip": true,
         "tooltip-format": "<tt><big>{calendar}</big></tt>",
         "calendar": {
@@ -109,6 +102,6 @@
   "custom/power": {
     "format": "⏻",
     "tooltip": false,
-    "on-click": "wlogout"
+    "on-click": "qs -c ~/.config/quickshell ipc call powerMenu toggle"
   }
 }

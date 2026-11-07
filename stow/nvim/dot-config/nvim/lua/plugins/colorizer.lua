@@ -1,16 +1,23 @@
 return {
   {
     "catgoose/nvim-colorizer.lua",
-    event = "VeryLazy",
+    lazy = false,
     opts = {
       filetypes = { "*" },
-      options = {
-        parsers = {
-          hex = { default = true },
-        },
-        display = {
-          mode = "background",
-        },
+
+      user_default_options = {
+        names = false,
+        RGB = true,
+        RRGGBB = true,
+        RGBA = false,
+        RRGGBBAA = false,
+        AARRGGBB = false,
+        rgb_fn = true,
+        hsl_fn = false,
+        css = false,
+        css_fn = false,
+        tailwind = false,
+        mode = "background",
       },
     },
   },

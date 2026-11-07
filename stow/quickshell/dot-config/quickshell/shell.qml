@@ -3,10 +3,11 @@ import Quickshell.Services.Notifications
 import QtQuick
 
 import "modules" as Modules
+import "." as Config
 
 ShellRoot {
     id: root
-
+    
   NotificationServer {
     id: notificationServer
 
@@ -40,5 +41,9 @@ ShellRoot {
 
     Modules.AudioOutput {
         id: audioPopup
+    } 
+
+    Modules.PowerMenu {
+        id: powerMenu
     }
 }

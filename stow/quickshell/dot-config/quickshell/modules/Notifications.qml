@@ -1,16 +1,74 @@
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.Notifications
 import QtQuick
 import QtQuick.Layouts
-import "../theme" as Theme
+import ".." as Config
 
 PanelWindow {
     id: popupWindow
 
+    function normalizeId(value) {
+        return String(value ?? "")
+            .toLowerCase()
+            .replace(/\.desktop$/, "")
+            .replace(/[^a-z0-9]/g, "")
+    }
+
+    function focusNotificationApp(notification) {
+        const appId = notification.desktopEntry || ""
+        const appName = notification.appName || ""
+
+        if (!appId && !appName)
+            return
+
+        const entry = appId
+            ? DesktopEntries.byId(appId)
+            : DesktopEntries.heuristicLookup(appName)
+
+        const candidates = [
+            appId,
+            entry?.id,
+            entry?.startupClass,
+            appName
+        ]
+            .map(normalizeId)
+            .filter(value => value.length > 0)
+
+        Hyprland.refreshToplevels()
+
+        const windows = Hyprland.toplevels.values
+
+        for (let i = 0; i < windows.length; i++) {
+            const win = windows[i]
+            const data = win.lastIpcObject ?? {}
+
+            const windowClasses = [
+                data.class,
+                data.initialClass
+            ].map(normalizeId)
+
+            const matches = candidates.some(candidate =>
+                windowClasses.some(cls => cls === candidate)
+            )
+
+            if (!matches || !win.address)
+                continue
+
+            if (win.workspace)
+                win.workspace.activate()
+
+            Hyprland.dispatch(
+                `focuswindow address:${win.address}`
+            )
+            return
+        }
+    }
+
     required property var server
 
-    // Adjust this to match your Waybar height plus a little gap.
+    // Configuration
     property int waybarOffset: 0
     property var notification: modelData
     property int popupWidth: 360
@@ -38,7 +96,7 @@ PanelWindow {
         id: stack
 
         width: popupWindow.popupWidth
-        spacing: Theme.Nord.spacing
+        spacing: Config.Theme.active.spacing
 
         Repeater {
             model: popupWindow.server.trackedNotifications
@@ -54,23 +112,27 @@ PanelWindow {
                 width: stack.width
                 implicitHeight: content.implicitHeight + 24
 
-                radius: Theme.Nord.radius
+                radius: Config.Theme.active.radius
+
                 color: hovered
-                    ? Theme.Nord.surface
-                    : Theme.Nord.background
+                    ? Config.Theme.active.surfaceHover
+                    : Config.Theme.active.background
 
-                border.width: 2
+                border.width: Config.Theme.active.borderWidth
+
                 border.color: notification.urgency === 2
-                    ? Theme.Nord.red
-                    : Theme.Nord.accentAlt
+                    ? Config.Theme.active.red
+                    : Config.Theme.active.accent
 
-                // Drop-shadoi-like accent strip.
+                // Accent strip
                 Rectangle {
                     width: 6
-                    radius: 0
+
+                    radius: Config.Theme.active.radius
+
                     color: card.notification.urgency === 2
-                        ? Theme.Nord.red
-                        : Theme.Nord.accent
+                        ? Config.Theme.active.red
+                        : Config.Theme.active.accent
 
                     anchors {
                         left: parent.left
@@ -79,6 +141,20 @@ PanelWindow {
                         leftMargin: 1
                         topMargin: 10
                         bottomMargin: 10
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    z: -1
+
+                    acceptedButtons: Qt.LeftButton
+                    cursorShape: Qt.PointingHandCursor
+
+                    onClicked: {
+                        popupWindow.focusNotificationApp(
+                            card.notification
+                        )
                     }
                 }
 
@@ -93,15 +169,15 @@ PanelWindow {
                         leftMargin: 14
                     }
 
-                    spacing: 10
+                    spacing: Config.Theme.active.spacing + 2
 
-                    // Application icon with a fallback glyph.
+                    // Application icon
                     Rectangle {
                         Layout.alignment: Qt.AlignTop
                         Layout.preferredWidth: 60
                         Layout.preferredHeight: 60
 
-                        radius: 0
+                        radius: Config.Theme.active.radius
                         color: "transparent"
                         clip: true
 
@@ -113,10 +189,12 @@ PanelWindow {
 
                             source: {
                                 const image = card.notification.image
+
                                 if (image && image.length > 0)
                                     return image
 
                                 const icon = card.notification.appIcon
+
                                 if (icon && icon.length > 0) {
                                     return Quickshell.iconPath(
                                         icon,
@@ -134,82 +212,109 @@ PanelWindow {
                             cache: true
                             visible: status === Image.Ready
                         }
-                          Text {
+
+                        Text {
                             anchors.centerIn: parent
+
                             text: "󰣇"
-                            color: Theme.Nord.accent
+
+                            color: Config.Theme.active.accent
+
                             font.pixelSize: 48
-                            font.family: Theme.Nord.fontFamily
+                            font.family: Config.Theme.active.fontFamily
+
                             visible: !appIcon.visible
-                          }
+                        }
                     }
+
+                    // Notification text
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 4
 
+                        // Application name
                         Text {
                             Layout.fillWidth: true
 
                             text: {
-                              const name = (card.notification.appName || "Notification").trim()
-                              if (!name) return "Notification"
+                                const name = (
+                                    card.notification.appName ||
+                                    "Notification"
+                                ).trim()
 
-                              return name.charAt(0).toUpperCase() + name.slice(1)
+                                if (!name)
+                                    return "Notification"
+
+                                return name.charAt(0).toUpperCase()
+                                    + name.slice(1)
                             }
-                            color: Theme.Nord.textMuted
-                            font.pixelSize: 11
+
+                            color: Config.Theme.active.subtext
+
+                            font.pixelSize: Config.Theme.active.fontSize - 3
                             font.weight: Font.Medium
-                            font.family: Theme.Nord.fontFamily
+                            font.family: Config.Theme.active.fontFamily
 
                             elide: Text.ElideRight
                         }
 
+                        // Notification summary
                         Text {
                             Layout.fillWidth: true
 
                             text: card.notification.summary || ""
-                            color: Theme.Nord.accent
-                            font.pixelSize: 13
+
+                            color: Config.Theme.active.accent
+
+                            font.pixelSize: Config.Theme.active.fontSize - 1
                             font.weight: Font.Bold
-                            font.family: Theme.Nord.fontFamily
+                            font.family: Config.Theme.active.fontFamily
 
                             wrapMode: Text.Wrap
                             maximumLineCount: 2
                             elide: Text.ElideRight
                         }
 
+                        // Notification body
                         Text {
                             Layout.fillWidth: true
 
                             text: card.notification.body || ""
-                            color: Theme.Nord.textMuted
-                            font.pixelSize: 12
-                            font.family: Theme.Nord.fontFamily
+
+                            color: Config.Theme.active.subtext
+
+                            font.pixelSize: Config.Theme.active.fontSize - 2
+                            font.family: Config.Theme.active.fontFamily
 
                             wrapMode: Text.Wrap
                             maximumLineCount: 4
                             elide: Text.ElideRight
+
                             visible: text.length > 0
                         }
                     }
 
-                    // Dismiss button.
+                    // Dismiss button
                     Rectangle {
                         Layout.alignment: Qt.AlignTop
                         Layout.preferredWidth: 24
                         Layout.preferredHeight: 24
 
-                        radius: 0
+                        radius: Config.Theme.active.radius
+
                         color: closeMouse.containsMouse
-                            ? Theme.Nord.surfaceHover
+                            ? Config.Theme.active.surfaceHover
                             : "transparent"
 
                         Text {
                             anchors.centerIn: parent
+
                             text: "×"
-                            color: Theme.Nord.textMuted
+
+                            color: Config.Theme.active.subtext
+
                             font.pixelSize: 19
-                            font.family: Theme.Nord.fontFamily
+                            font.family: Config.Theme.active.fontFamily
                         }
 
                         MouseArea {
@@ -224,13 +329,13 @@ PanelWindow {
                     }
                 }
 
-                // The notification disappears after its timeout.
+                // Notification expiration
                 Timer {
                     interval: card.notification.expireTimeout > 0
                         ? Math.max(
-                              1500,
-                              card.notification.expireTimeout * 1000
-                          )
+                            1500,
+                            card.notification.expireTimeout * 1000
+                        )
                         : 5000
 
                     running: !card.hovered
@@ -250,3 +355,4 @@ PanelWindow {
         }
     }
 }
+

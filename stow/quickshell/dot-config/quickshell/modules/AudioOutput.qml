@@ -1,10 +1,11 @@
-
 import QtQuick
 import QtQuick.Controls
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Services.Pipewire
 import Quickshell.Io
+import ".." as Config
 
 // Small anchor window for the popup.
 PanelWindow {
@@ -19,7 +20,7 @@ PanelWindow {
     implicitHeight: 1
     color: "transparent"
 
-    // Track the current output sink so its audio properties are valid.
+    // Track the current output sink.
     PwObjectTracker {
         objects: Pipewire.defaultAudioSink
             ? [Pipewire.defaultAudioSink]
@@ -47,14 +48,6 @@ PanelWindow {
             )
         }
     }
-    // Nord palette
-    readonly property color bg:           "#2E3440"
-    readonly property color surface:      "#3B4252"
-    readonly property color surfaceHover: "#434C5E"
-    readonly property color borderColor:  "#88C0D0"
-    readonly property color textColor:    "#ECEFF4"
-    readonly property color mutedColor:   "#D8DEE9"
-    readonly property color accentColor:  "#88C0D0"
 
     // Layout
     readonly property int popupMargin: 16
@@ -64,12 +57,35 @@ PanelWindow {
     readonly property int headerHeight: 22
     readonly property int statusHeight: 14
 
-    // Available audio output devices
-    property var audioDevices: Pipewire.nodes.values.filter(node =>
-        node.isSink &&
-        !node.isStream &&
-        node.audio !== null
-    )
+    // Available audio output devices (sorted A-Z)
+    property var audioDevices: Pipewire.nodes.values
+        .filter(node =>
+            node.isSink &&
+            !node.isStream &&
+            node.audio !== null
+        )
+        .sort((a, b) => {
+            const nameA = (
+                a.description ||
+                a.name ||
+                "Unknown device"
+            )
+
+            const nameB = (
+                b.description ||
+                b.name ||
+                "Unknown device"
+            )
+
+            return nameA.localeCompare(
+                nameB,
+                undefined,
+                {
+                    sensitivity: "base",
+                    numeric: true
+                }
+            )
+        })
 
     // Calculate popup height
     readonly property int deviceListHeight:
@@ -115,10 +131,10 @@ PanelWindow {
         Rectangle {
             anchors.fill: parent
 
-            color: root.bg
-            radius: 0
-            border.width: 2
-            border.color: root.borderColor
+            color: Config.Theme.active.background
+            radius: Config.Theme.active.radius
+            border.width: Config.Theme.active.borderWidth
+            border.color: Config.Theme.active.border
             clip: true
 
             Column {
@@ -131,18 +147,20 @@ PanelWindow {
                 // Title
                 Text {
                     text: "Audio Output"
-                    color: root.textColor
-                    font.pixelSize: 18
+                    color: Config.Theme.active.text
+
+                    font.pixelSize: Config.Theme.active.titleFontSize
                     font.bold: true
-                    font.family: "JetBrainsMono Nerd Font"
+                    font.family: Config.Theme.active.fontFamily
                 }
 
                 // PipeWire status
                 Text {
                     text: "PipeWire ready: " + Pipewire.ready
-                    color: root.mutedColor
-                    font.pixelSize: 12
-                    font.family: "JetBrainsMono Nerd Font"
+                    color: Config.Theme.active.subtext
+
+                    font.pixelSize: Config.Theme.active.fontSize
+                    font.family: Config.Theme.active.fontFamily
                     opacity: 0.7
                 }
 
@@ -157,12 +175,12 @@ PanelWindow {
                         height: parent.height
 
                         text: "󰕾"
-                        color: root.textColor
+                        color: Config.Theme.active.text
                         verticalAlignment: Text.AlignVCenter
 
                         font.pixelSize: 20
                         font.bold: true
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Config.Theme.active.fontFamily
                     }
 
                     Slider {
@@ -223,7 +241,7 @@ PanelWindow {
                             }
                         }
 
-                        // Nord styling
+                        // Themed slider background
                         background: Rectangle {
                             x: volumeSlider.leftPadding
                             y: volumeSlider.topPadding
@@ -231,19 +249,20 @@ PanelWindow {
                                 - height / 2
 
                             width: volumeSlider.availableWidth
-                            height: 4
-                            radius: 0
-                            color: root.surfaceHover
+                            height: Config.Theme.active.sliderThickness
+                            radius: Config.Theme.active.radius
+                            color: Config.Theme.active.surfaceHover
 
                             Rectangle {
                                 width: volumeSlider.visualPosition
                                     * parent.width
                                 height: parent.height
-                                radius: 0
-                                color: root.accentColor
+                                radius: Config.Theme.active.radius
+                                color: Config.Theme.active.accent
                             }
                         }
 
+                        // Themed slider handle
                         handle: Rectangle {
                             x: volumeSlider.leftPadding
                                 + volumeSlider.visualPosition
@@ -252,12 +271,12 @@ PanelWindow {
                                 + volumeSlider.availableHeight / 2
                                 - height / 2
 
-                            width: 14
-                            height: 14
-                            radius: 7
-                            color: root.textColor
-                            border.width: 2
-                            border.color: root.accentColor
+                            width: Config.Theme.active.sliderHandleSize
+                            height: Config.Theme.active.sliderHandleSize
+                            radius: Config.Theme.active.sliderHandleRadius
+                            color: Config.Theme.active.text
+                            border.width: Config.Theme.active.borderWidth
+                            border.color: Config.Theme.active.accent
                         }
                     }
 
@@ -266,14 +285,14 @@ PanelWindow {
                         height: parent.height
 
                         text: Math.round(volumeSlider.value * 100) + "%"
-                        color: root.accentColor
+                        color: Config.Theme.active.accent
 
                         horizontalAlignment: Text.AlignRight
                         verticalAlignment: Text.AlignVCenter
 
                         font.pixelSize: 18
                         font.bold: true
-                        font.family: "JetBrainsMono Nerd Font"
+                        font.family: Config.Theme.active.fontFamily
                     }
                 }
 
@@ -281,7 +300,6 @@ PanelWindow {
                 Repeater {
                     id: deviceRepeater
 
-                    // Destroy rows while closed and recreate on opening.
                     model: popup.visible ? root.audioDevices : []
 
                     delegate: Rectangle {
@@ -301,7 +319,6 @@ PanelWindow {
                                 (modelData.name || "")
                             ).toLowerCase()
 
-                            // Headphones and headsets
                             if (name.includes("headphone") ||
                                 name.includes("headset") ||
                                 name.includes("earbud") ||
@@ -309,25 +326,21 @@ PanelWindow {
                                 return "󰋋"
                             }
 
-                            // USB devices, including USB headsets
                             if (name.includes("usb")) {
                                 return "󰋋"
                             }
 
-                            // Bluetooth audio devices
                             if (name.includes("bluetooth") ||
                                 name.includes("bluez")) {
                                 return "󰂯"
                             }
 
-                            // HDMI and DisplayPort audio
                             if (name.includes("hdmi") ||
                                 name.includes("displayport") ||
                                 name.includes("display port")) {
                                 return "󰡁"
                             }
 
-                            // Speakers and built-in audio
                             if (name.includes("speaker") ||
                                 name.includes("analog") ||
                                 name.includes("built-in") ||
@@ -341,17 +354,19 @@ PanelWindow {
                         width: contentColumn.width
                         height: root.rowHeight
 
-                        // Always calculate colors from the current sink.
-                        color: Pipewire.defaultAudioSink === modelData
-                            ? root.accentColor
+                        color: isSelected
+                            ? Config.Theme.active.accent
                             : (isHovered
-                                ? root.surfaceHover
-                                : root.surface)
+                                ? Config.Theme.active.surfaceHover
+                                : Config.Theme.active.surface)
 
-                        border.width:
-                            Pipewire.defaultAudioSink === modelData ? 1 : 0
+                        border.width: isSelected
+                            ? Config.Theme.active.borderWidth
+                            : 0
 
-                        border.color: root.borderColor
+                        border.color: Config.Theme.active.border
+
+                        radius: Config.Theme.active.radius
 
                         Row {
                             anchors.fill: parent
@@ -366,16 +381,15 @@ PanelWindow {
 
                                 text: deviceRow.deviceIcon
 
-                                color: Pipewire.defaultAudioSink ===
-                                    deviceRow.modelData
-                                    ? root.bg
-                                    : root.accentColor
+                                color: deviceRow.isSelected
+                                    ? Config.Theme.active.background
+                                    : Config.Theme.active.accent
 
                                 verticalAlignment: Text.AlignVCenter
                                 horizontalAlignment: Text.AlignHCenter
 
                                 font.pixelSize: 18
-                                font.family: "JetBrainsMono Nerd Font"
+                                font.family: Config.Theme.active.fontFamily
                             }
 
                             // Device name
@@ -387,18 +401,16 @@ PanelWindow {
                                     || deviceRow.modelData.name
                                     || "Unknown device"
 
-                                color: Pipewire.defaultAudioSink ===
-                                    deviceRow.modelData
-                                    ? root.bg
-                                    : root.textColor
+                                color: deviceRow.isSelected
+                                    ? Config.Theme.active.background
+                                    : Config.Theme.active.text
 
                                 verticalAlignment: Text.AlignVCenter
                                 elide: Text.ElideRight
 
-                                font.pixelSize: 14
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.bold: Pipewire.defaultAudioSink ===
-                                    deviceRow.modelData
+                                font.pixelSize: Config.Theme.active.fontSize
+                                font.family: Config.Theme.active.fontFamily
+                                font.bold: deviceRow.isSelected
                             }
                         }
 
